@@ -1,8 +1,8 @@
 # Выберите базовый образ с Golang
-FROM golang:1.19-alpine as builder
+FROM golang:1.19.7-buster as builder
 
 # Установите инструменты для компиляции
-RUN apk add --no-cache git build-base pkgconfig alsa-utils alsa-utils-doc alsa-lib alsa-lib-dev alsaconf alsa-ucm-conf
+RUN apt install -y git build-base pkgconfig alsa-utils alsa-utils-doc alsa-lib alsa-lib-dev alsaconf alsa-ucm-conf
 
 # Установите рабочую директорию
 WORKDIR /app
@@ -17,10 +17,10 @@ RUN go mod download
 RUN GOOS=linux go build -o cringecast-client-linux main.go
 
 # Создайте новый образ на базе Linux alpine для запуска приложения
-FROM alpine:latest
+FROM golang:1.19.7-buster
 
 # Установите зависимости, необходимые для работы приложения
-RUN apk --no-cache add ca-certificates
+#RUN apt install -y ca-certificates
 
 # Установите рабочую директорию
 WORKDIR /app/
