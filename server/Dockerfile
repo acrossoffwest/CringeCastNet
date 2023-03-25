@@ -32,6 +32,7 @@ WORKDIR /app/
 
 # Копируйте исполняемый файл из образа builder
 COPY --from=builder /app/cringecast-client-linux .
+COPY --from=builder /app/static static
 
 EXPOSE 80
 

@@ -12,8 +12,7 @@ services:
       - .env
     networks:
       - general
-    environment:
-      - VIRTUAL_HOST=cringecast.net
+      - reverseproxy_default
 
   mosquitto:
     image: eclipse-mosquitto:latest
