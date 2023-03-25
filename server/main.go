@@ -67,6 +67,11 @@ func main() {
 	http.HandleFunc("/play", handlePlayRequest)
 	//http.HandleFunc("/stop", handleStopRequest)
 
+	fs := http.FileServer(http.Dir("static"))
+
+	// Set up the route for the static files
+	http.Handle("/", fs)
+
 	log.Println("Listening port: 80")
 
 	err := http.ListenAndServe("0.0.0.0:80", nil)
@@ -124,6 +129,8 @@ func handleSayRequest(w http.ResponseWriter, r *http.Request) {
 
 	token := client.Publish(*topic, 0, false, payload)
 	token.Wait()
+	w.Header().Set("Content-Type", "text/plain")
+	_, _ = w.Write([]byte("Success"))
 }
 
 func handlePlayRequest(w http.ResponseWriter, r *http.Request) {

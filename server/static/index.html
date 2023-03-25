@@ -1,0 +1,216 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>CringeCast.Net</title>
+    <meta name="description" content="Cast cringe through your speakers">
+    <meta name="author" content="critbit">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/siimple.min.css">
+    <style>
+        .highlight {
+            background-color: #DEDEDE;
+        }
+    </style>
+</head>
+<link rel="icon" href="favicon.png">
+</head>
+
+<body >
+<div id="app" style="max-width:900px; margin:0 auto;">
+    <div class="siimple-box siimple-box--green">
+        <div class="siimple-box-title">CringeCast.Net</div>
+        <div class="siimple-box-subtitle">Remotely cast cringe, now 100% more frontend!</div>
+        <div class="siimple-box-detail">
+            <a class="siimple-link"
+               href="https://github.com/acrossoffwest/CringeCastNet">
+                https://github.com/acrossoffwest/CringeCastNet
+            </a>
+             inspired by
+            <a class="siimple-link"
+               href="https://github.com/cr1tbit/CringeCast">
+                https://github.com/cr1tbit/CringeCast
+            </a>
+        </div>
+    </div>
+    <div class="siimple-grid">
+        <div class="siimple-grid-row">
+            <!-- Left part of the window-->
+            <div class="siimple-grid-col siimple-grid-col--8">
+                <!-- HTML of the manual query window-->
+                <div class="siimple-card-header">
+                    <label class="siimple-label">Say something:</label>
+                </div>
+                <div class="siimple-card-body">
+                    <form>
+                        <label class="siimple-label">/say/</label>
+                        <input type="text"
+                               class="siimple-input"
+                               id="param_say"
+                               v-model="sayForm.query"
+                        >
+                        <select type="text"
+                               class="siimple-input"
+                               style="margin-left: 10px"
+                               id="param_say_lang"
+                               v-model="sayForm.lang"
+                        >
+                            <option value="en">English</option>
+                            <option value="pl">Polish</option>
+                            <option value="ua">Ukranian</option>
+                            <option value="fr">French</option>
+                            <option value="ru">Russian</option>
+                        </select>
+                    </form>
+                </div>
+                <div class="siimple-card-footer">
+                    <div class="siimple-btn siimple-btn--orange"
+                         @click="say">
+                        Send!
+                    </div>
+                </div>
+                <br>
+
+                <div class="siimple-card-header">
+                    <label class="siimple-label">Play audio file by URL to file:</label>
+                </div>
+                <div class="siimple-card-body">
+                    <form>
+                        <input type="text"
+                               class="siimple-input"
+                               id="param_guess"
+                               style="width: 100%;"
+                               v-model="playForm.url"
+                        >
+                        <button type="button"
+                                style="height: 0px;
+                                    width: 0px; 
+                                    border: none; 
+                                    padding: 0px;"
+                                hidefocus="true"
+                        />
+                    </form>
+                </div>
+                <div class="siimple-card-footer">
+                    <div class="siimple-btn siimple-btn--orange"
+                         @click="play">
+                        Send!
+                    </div>
+                </div>
+
+                <br>
+
+                <div class="siimple-card-header">
+                    <label class="siimple-label">Recent query:</label>
+                </div>
+                <div class="siimple-card-body">
+                    <textarea readonly id="queryDisp" class="siimple-textarea" rows="5" style="width:96%">
+{{ !prevQuery ? 'No query performed' : prevQuery }}
+                    </textarea>
+                </div>
+                <div class="siimple-card-footer">
+                </div>
+                <br>
+                <!-- Device response window-->
+                <div class="siimple-card-header">
+                    <label class="siimple-label">Backends' recent response:</label>
+                </div>
+                <div class="siimple-card-body">
+                    <textarea readonly id="respDisp" class="siimple-textarea" rows="5" style="width:96%">
+{{ !rawResponse ? 'Nothing (yet!)' : rawResponse }}
+                    </textarea>
+                </div>
+            </div>
+<!--            &lt;!&ndash; HTML of the antenna control panel&ndash;&gt;-->
+<!--            <div class="siimple-grid-col siimple-grid-col&#45;&#45;4">-->
+<!--                <div class="siimple-card-header">-->
+<!--                    <label class="siimple-label">Set volume:</label>-->
+<!--                </div>-->
+<!--                <div class="siimple-card-body">-->
+<!--                    <input type="range" class="slider" value="50"-->
+<!--                           onchange="httpGet(null, 'vol/' + this.value, handleServerResponse)"/>-->
+<!--                    <div class="siimple-btn siimple-btn&#45;&#45;red"-->
+<!--                         onclick="httpGet(null, 'teapot/on', handleServerResponse)"> Set teapot mode!-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="siimple-card-header">-->
+<!--                    <label class="siimple-label">Play audio files:</label>-->
+<!--                </div>-->
+<!--                <div class="siimple-card-body" id="audioFilesDisp">-->
+<!--                    Here be files to play-->
+<!--                </div>-->
+<!--                <div class="siimple-card-header">-->
+<!--                    <label class="siimple-label">Drop your tune:</label>-->
+<!--                </div>-->
+<!--                <div id="drop-area" class="siimple-card-body">-->
+<!--                    <form class="my-form">-->
+<!--                        <p>Upload your mp3 file by dragging and dropping onto the this region</p>-->
+<!--                        <input type="file" accept="audio/mpeg3" onchange="handleFiles(this.files)">-->
+<!--                    </form>-->
+<!--                </div>-->
+<!--                <div class="siimple-card-footer">-->
+<!--                    <label class="siimple-label">-->
+<!--                        Recent backend status:-->
+<!--                        <span id="deviceStatusTag"-->
+<!--                              class="siimple-tag siimple-tag&#45;&#45;dark siimple-tag&#45;&#45;rounded">Unknown</span>-->
+<!--                    </label>-->
+<!--                </div>-->
+<!--                <br>-->
+<!--            </div>-->
+        </div>
+    </div>
+</div>
+<div class="siimple-footer siimple-footer" align="center">
+    Made with love using <strong>siimple</strong> - easy, lightweight and fun CSS framework AND with Axios & Vue
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.4/axios.min.js" integrity="sha512-LUKzDoJKOLqnxGWWIBM4lzRBlxcva2ZTztO8bTcWPmDSpkErWx0bSP4pdsjNH8kiHAUPaT06UXcb+vOEZH+HpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+    const { createApp } = Vue;
+    createApp({
+        mounted () {
+
+        },
+        data() {
+            return {
+                axios: axios.create({
+                    baseURL: 'https://cringecast.net',
+                    timeout: 30000,
+                }),
+                playForm: {},
+                sayForm: {
+                    query: 'Welcome to the cringebox 3000',
+                    lang: 'en'
+                },
+                rawResponse: null,
+                prevQuery: null
+            }
+        },
+        methods: {
+            async say() {
+                if (!this.sayForm.query) {
+                    return;
+                }
+                const { data } = await this.axios.post('/say', this.sayForm);
+                this.rawResponse = data;
+                this.prevQuery = this.sayForm;
+            },
+            async play() {
+                if (!this.playForm.url) {
+                    return;
+                }
+                const { data } = await this.axios.post('/play', this.playForm);
+                this.rawResponse = data;
+                this.prevQuery = this.playForm;
+            }
+        }
+    }).mount('#app')
+</script>
+</body>
+</html>
+
+
+
