@@ -2,3 +2,4 @@
 !.gitignore
 !cringecast.service.example
 !init-service.sh
+!remove-service.sh
