@@ -67,9 +67,9 @@ func main() {
 	http.HandleFunc("/play", handlePlayRequest)
 	//http.HandleFunc("/stop", handleStopRequest)
 
-	log.Println("Listening port: 8080")
+	log.Println("Listening port: 80")
 
-	err := http.ListenAndServe("0.0.0.0:8080", nil)
+	err := http.ListenAndServe("0.0.0.0:80", nil)
 	if err != nil {
 		return
 	}

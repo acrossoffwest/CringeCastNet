@@ -33,7 +33,7 @@ WORKDIR /app/
 # Копируйте исполняемый файл из образа builder
 COPY --from=builder /app/cringecast-client-linux .
 
-EXPOSE 8080
+EXPOSE 80
 
 # Укажите команду для запуска приложения
 CMD  ./cringecast-client-linux --mqtt-url=$MQTT_URL --mqtt-topic=$MQTT_TOPIC --mqtt-username=$MQTT_USERNAME --mqtt-password=$MQTT_PASSWORD
