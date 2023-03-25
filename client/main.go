@@ -51,10 +51,10 @@ var messageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Messa
 }
 
 func main() {
-	username := flag.String("username", "admin", "Username")
-	password := flag.String("password", "pass", "Password")
-	broker := flag.String("broker", "tcp://localhost:1883", "Broker")
-	topic := flag.String("topic", "cringecast", "Topic")
+	username := flag.String("mqtt-username", "admin", "MQTT Username")
+	password := flag.String("mqtt-password", "pass", "MQTT Password")
+	broker := flag.String("mqtt-url", "tcp://localhost:1883", "MQTT Broker URL")
+	topic := flag.String("mqtt-topic", "cringecast", "MQTT Topic")
 
 	defer func() {
 		if r := recover(); r != nil {

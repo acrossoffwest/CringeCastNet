@@ -15,7 +15,7 @@ const (
 	clientID = "mqtt_publisher"
 )
 
-var topic = flag.String("topic", "cringecast", "Topic")
+var topic = flag.String("mqtt-topic", "cringecast", "MQTT Topic")
 
 var opts *mqtt.ClientOptions
 var client mqtt.Client
@@ -41,9 +41,9 @@ type SayPayload struct {
 }
 
 func main() {
-	username := flag.String("username", "admin", "Username")
-	password := flag.String("password", "pass", "Password")
-	broker := flag.String("broker", "tcp://localhost:1883", "Broker")
+	username := flag.String("mqtt-username", "admin", "MQTT Username")
+	password := flag.String("mqtt-password", "pass", "MQTT Password")
+	broker := flag.String("mqtt-url", "tcp://localhost:1883", "MQTT Broker URL")
 
 	defer func() {
 		if r := recover(); r != nil {
