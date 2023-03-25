@@ -1,0 +1,4 @@
+*
+!.gitignore
+!cringecast.service.example
+!init-service.sh
