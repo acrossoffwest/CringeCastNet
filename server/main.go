@@ -65,8 +65,8 @@ func main() {
 		log.Fatalf("Error during connection to MQTT: %s", token.Error())
 	}
 
-	http.Handle("/say", throttleMiddleware(http.HandlerFunc(handleSayRequest), 10, 5))
-	http.Handle("/play", throttleMiddleware(http.HandlerFunc(handlePlayRequest), 10, 5))
+	http.Handle("/say", throttleMiddleware(http.HandlerFunc(handleSayRequest), 15.0/900.0, 15))
+	http.Handle("/play", throttleMiddleware(http.HandlerFunc(handlePlayRequest), 15.0/900.0, 15))
 	//http.HandleFunc("/stop", handleStopRequest)
 
 	fs := http.FileServer(http.Dir("static"))
@@ -83,14 +83,12 @@ func main() {
 }
 
 func throttleMiddleware(next http.Handler, rate float64, capacity int64) http.Handler {
+	bucket := ratelimit.NewBucketWithRate(rate, capacity)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		bucket := ratelimit.NewBucketWithRate(rate, capacity)
-
 		if bucket.TakeAvailable(1) < 1 {
 			http.Error(w, "Too many requests", http.StatusTooManyRequests)
 			return
 		}
-
 		next.ServeHTTP(w, r)
 	})
 }
