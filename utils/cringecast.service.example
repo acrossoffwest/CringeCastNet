@@ -9,7 +9,7 @@ Restart=always
 RestartSec=10
 User=pi
 WorkingDirectory=/home/cringebox/CringeCastNet/bin
-ExecStart=./cringecast-client --mqtt-url=tcp://localhost:1883 --mqtt-password=pass
+ExecStart=/home/cringebox/CringeCastNet/bin/cringecast-client --mqtt-url=tcp://localhost:1883 --mqtt-password=pass
 
 [Install]
 WantedBy=multi-user.target
