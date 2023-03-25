@@ -66,12 +66,7 @@ func main() {
 		}
 	}()
 
-	var err error
-	context, err = oto.NewContext(48000, 1, 2, 8192)
-	if err != nil {
-		fmt.Println("Error creating audio player:", err)
-		return
-	}
+	context = initializeAudioPlayer()
 	defer func(context *oto.Context) {
 		err := context.Close()
 		if err != nil {
@@ -79,9 +74,24 @@ func main() {
 		}
 	}(context)
 
+	client := connectToMQTT(*broker, *username, *password)
+	subscribeToTopic(client, *topic)
+
+	select {}
+}
+
+func initializeAudioPlayer() *oto.Context {
+	newContext, err := oto.NewContext(48000, 1, 2, 8192)
+	if err != nil {
+		fmt.Errorf("Error creating audio player:", err)
+	}
+	return newContext
+}
+
+func connectToMQTT(broker, username, password string) mqtt.Client {
 	rand.Seed(time.Now().UnixNano())
 	clientID := fmt.Sprintf("mqtt_subscriber_%d", rand.Int())
-	opts := mqtt.NewClientOptions().AddBroker(*broker).SetClientID(clientID).SetUsername(*username).SetPassword(*password)
+	opts := mqtt.NewClientOptions().AddBroker(broker).SetClientID(clientID).SetUsername(username).SetPassword(password)
 	opts.SetDefaultPublishHandler(messageHandler)
 
 	client := mqtt.NewClient(opts)
@@ -91,11 +101,13 @@ func main() {
 		log.Fatalf("Error during connection to MQTT: %s", token.Error())
 	}
 
-	token = client.Subscribe(*topic, 0, nil)
-	token.Wait()
-	fmt.Printf("Subscribed to topic: %s\n", *topic)
+	return client
+}
 
-	select {}
+func subscribeToTopic(client mqtt.Client, topic string) {
+	token := client.Subscribe(topic, 0, nil)
+	token.Wait()
+	fmt.Printf("Subscribed to topic: %s\n", topic)
 }
 
 func say(sayPayload SayPayload) {
@@ -111,31 +123,54 @@ func say(sayPayload SayPayload) {
 }
 
 func playAudio(url string) {
-	resp, err := http.Get(url)
+	audioData, err := fetchAudioData(url)
 	if err != nil {
 		fmt.Println("Error loading audio file:", err)
 		return
 	}
 
-	// Считываем аудиофайл полностью в буфер
-	audioData, err := io.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		fmt.Println("Error reading audio data:", err)
-		return
-	}
-
-	// Создаем reader для воспроизведения аудио из буфера
-	decoder, err := mp3.NewDecoder(bytes.NewReader(audioData))
+	decoder, err := createAudioDecoder(audioData)
 	if err != nil {
 		fmt.Println("Error decoding audio file:", err)
 		return
 	}
 
-	// Запуск воспроизведения в отдельной горутине
+	playDecodedAudio(decoder)
+}
+
+func fetchAudioData(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	audioData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return audioData, nil
+}
+
+func createAudioDecoder(audioData []byte) (*mp3.Decoder, error) {
+	return mp3.NewDecoder(bytes.NewReader(audioData))
+}
+
+func playDecodedAudio(decoder *mp3.Decoder) {
 	go func() {
 		player := context.NewPlayer()
-		defer player.Close()
+		defer func(player *oto.Player) {
+			err := player.Close()
+			if err != nil {
+
+			}
+		}(player)
 
 		buf := make([]byte, 8192)
 		for {
@@ -152,7 +187,6 @@ func playAudio(url string) {
 				return
 			}
 
-			// Записываем блоки аудио данных в плеер
 			if _, err := player.Write(buf[:n]); err != nil {
 				fmt.Println("Error playing audio data:", err)
 				return
