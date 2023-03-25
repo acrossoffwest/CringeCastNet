@@ -47,6 +47,8 @@ func main() {
 
 	flag.Parse()
 
+	fmt.Println(*broker)
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic:", r)

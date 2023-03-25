@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 )
 
 var stopPlaying = false
+var context *oto.Context
 
 type Message struct {
 	Command string `json:"command"`
@@ -64,6 +66,19 @@ func main() {
 		}
 	}()
 
+	var err error
+	context, err = oto.NewContext(48000, 1, 2, 8192)
+	if err != nil {
+		fmt.Println("Error creating audio player:", err)
+		return
+	}
+	defer func(context *oto.Context) {
+		err := context.Close()
+		if err != nil {
+
+		}
+	}(context)
+
 	rand.Seed(time.Now().UnixNano())
 	clientID := fmt.Sprintf("mqtt_subscriber_%d", rand.Int())
 	opts := mqtt.NewClientOptions().AddBroker(*broker).SetClientID(clientID).SetUsername(*username).SetPassword(*password)
@@ -101,56 +116,49 @@ func playAudio(url string) {
 		fmt.Println("Error loading audio file:", err)
 		return
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
 
-		}
-	}(resp.Body)
+	// Считываем аудиофайл полностью в буфер
+	audioData, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		fmt.Println("Error reading audio data:", err)
+		return
+	}
 
-	decoder, err := mp3.NewDecoder(resp.Body)
+	// Создаем reader для воспроизведения аудио из буфера
+	decoder, err := mp3.NewDecoder(bytes.NewReader(audioData))
 	if err != nil {
 		fmt.Println("Error decoding audio file:", err)
 		return
 	}
 
-	sampleRate := decoder.SampleRate() * 2
+	// Запуск воспроизведения в отдельной горутине
+	go func() {
+		player := context.NewPlayer()
+		defer player.Close()
 
-	context, err := oto.NewContext(int(sampleRate), 1, 2, 8192)
-	if err != nil {
-		fmt.Println("Error creating audio player:", err)
-		return
-	}
-	defer func(context *oto.Context) {
-		err := context.Close()
-		if err != nil {
+		buf := make([]byte, 8192)
+		for {
+			if stopPlaying {
+				stopPlaying = false
+				break
+			}
+			n, err := decoder.Read(buf)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				fmt.Println("Error reading audio data:", err)
+				return
+			}
 
+			// Записываем блоки аудио данных в плеер
+			if _, err := player.Write(buf[:n]); err != nil {
+				fmt.Println("Error playing audio data:", err)
+				return
+			}
 		}
-	}(context)
-
-	player := context.NewPlayer()
-
-	buf := make([]byte, 8192)
-	for {
-		if stopPlaying {
-			stopPlaying = false
-			break
-		}
-		n, err := decoder.Read(buf)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			fmt.Println("Error reading audio data:", err)
-			return
-		}
-
-		// Записываем блоки аудио данных в плеер
-		if _, err := player.Write(buf[:n]); err != nil {
-			fmt.Println("Error playing audio data:", err)
-			return
-		}
-	}
+	}()
 }
 
 func splitToSentences(text string, maxLength int) []string {
