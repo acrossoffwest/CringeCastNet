@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/hajimehoshi/go-mp3"
 	"github.com/hajimehoshi/oto"
@@ -14,13 +15,6 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-)
-
-const (
-	broker   = "tcp://localhost:1883"
-	topic    = "cringecast"
-	username = "admin"
-	password = "pass"
 )
 
 var stopPlaying = false
@@ -57,6 +51,11 @@ var messageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Messa
 }
 
 func main() {
+	username := flag.String("username", "admin", "Username")
+	password := flag.String("password", "pass", "Password")
+	broker := flag.String("broker", "tcp://localhost:1883", "Broker")
+	topic := flag.String("topic", "cringecast", "Topic")
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic:", r)
@@ -65,7 +64,7 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 	clientID := fmt.Sprintf("mqtt_subscriber_%d", rand.Int())
-	opts := mqtt.NewClientOptions().AddBroker(broker).SetClientID(clientID).SetUsername(username).SetPassword(password)
+	opts := mqtt.NewClientOptions().AddBroker(*broker).SetClientID(clientID).SetUsername(*username).SetPassword(*password)
 	opts.SetDefaultPublishHandler(messageHandler)
 
 	client := mqtt.NewClient(opts)
@@ -75,9 +74,9 @@ func main() {
 		log.Fatalf("Error during connection to MQTT: %s", token.Error())
 	}
 
-	token = client.Subscribe(topic, 0, nil)
+	token = client.Subscribe(*topic, 0, nil)
 	token.Wait()
-	fmt.Printf("Subscribed to topic: %s\n", topic)
+	fmt.Printf("Subscribed to topic: %s\n", *topic)
 
 	select {}
 }

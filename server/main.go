@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"io"
@@ -11,12 +12,10 @@ import (
 )
 
 const (
-	broker   = "tcp://localhost:1883"
 	clientID = "mqtt_publisher"
-	topic    = "cringecast"
-	username = "admin"
-	password = "pass"
 )
+
+var topic = flag.String("topic", "cringecast", "Topic")
 
 var opts *mqtt.ClientOptions
 var client mqtt.Client
@@ -42,13 +41,17 @@ type SayPayload struct {
 }
 
 func main() {
+	username := flag.String("username", "admin", "Username")
+	password := flag.String("password", "pass", "Password")
+	broker := flag.String("broker", "tcp://localhost:1883", "Broker")
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic:", r)
 		}
 	}()
 
-	opts = mqtt.NewClientOptions().AddBroker(broker).SetClientID(clientID).SetUsername(username).SetPassword(password)
+	opts = mqtt.NewClientOptions().AddBroker(*broker).SetClientID(clientID).SetUsername(*username).SetPassword(*password)
 	client = mqtt.NewClient(opts)
 	token = client.Connect()
 
@@ -115,7 +118,7 @@ func handleSayRequest(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	token := client.Publish(topic, 0, false, payload)
+	token := client.Publish(*topic, 0, false, payload)
 	token.Wait()
 }
 
@@ -158,7 +161,7 @@ func handlePlayRequest(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	token := client.Publish(topic, 0, false, payload)
+	token := client.Publish(*topic, 0, false, payload)
 	token.Wait()
 }
 
