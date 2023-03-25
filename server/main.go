@@ -45,6 +45,8 @@ func main() {
 	password := flag.String("mqtt-password", "pass", "MQTT Password")
 	broker := flag.String("mqtt-url", "tcp://localhost:1883", "MQTT Broker URL")
 
+	flag.Parse()
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic:", r)

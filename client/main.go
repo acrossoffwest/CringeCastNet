@@ -56,6 +56,8 @@ func main() {
 	broker := flag.String("mqtt-url", "tcp://localhost:1883", "MQTT Broker URL")
 	topic := flag.String("mqtt-topic", "cringecast", "MQTT Topic")
 
+	flag.Parse()
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic:", r)
