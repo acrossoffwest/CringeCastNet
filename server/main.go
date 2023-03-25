@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/juju/ratelimit"
 )
 
 const (
@@ -63,8 +65,8 @@ func main() {
 		log.Fatalf("Error during connection to MQTT: %s", token.Error())
 	}
 
-	http.HandleFunc("/say", handleSayRequest)
-	http.HandleFunc("/play", handlePlayRequest)
+	http.Handle("/say", throttleMiddleware(http.HandlerFunc(handleSayRequest), 10, 5))
+	http.Handle("/play", throttleMiddleware(http.HandlerFunc(handlePlayRequest), 10, 5))
 	//http.HandleFunc("/stop", handleStopRequest)
 
 	fs := http.FileServer(http.Dir("static"))
@@ -78,6 +80,19 @@ func main() {
 	if err != nil {
 		return
 	}
+}
+
+func throttleMiddleware(next http.Handler, rate float64, capacity int64) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bucket := ratelimit.NewBucketWithRate(rate, capacity)
+
+		if bucket.TakeAvailable(1) < 1 {
+			http.Error(w, "Too many requests", http.StatusTooManyRequests)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func handleSayRequest(w http.ResponseWriter, r *http.Request) {
