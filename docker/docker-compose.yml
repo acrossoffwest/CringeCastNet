@@ -36,3 +36,5 @@ volumes:
 
 networks:
   general:
+  reverseproxy_default:
+    external: true
